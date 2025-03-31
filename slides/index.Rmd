@@ -1,0 +1,170 @@
+---
+title: "Programming Assignment"
+subtitle: "4"
+author: "Yhosep Barba"
+institute: "Rutgers University"
+date: "2025/03/31 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+#Uploading packages
+```{r}
+library("tidyverse")
+library("here")
+library("ds4ling")
+```
+
+```{r}
+library("knitr")
+```
+
+---
+#Uploading datasets
+```{r}
+data1 <- read_csv(here("data_raw", "fricatives", "assumptions.csv"))
+data2 <- read_csv(here("data_raw", "fricatives", "fricatives.csv"))  
+```
+
+---
+#Tidying data
+```{r}
+#| echo = FALSE
+data2_tidy <- data2 |>
+  pivot_longer(
+    cols = c(s_cog, s_skewness, sh_cog, sh_skewness),
+    names_to = "measurement",
+    values_to = "value"
+  ) |>
+  separate(
+    col = measurement,
+    into = c("phoneme", "measurement"),
+    sep = "_"
+  ) |>
+   pivot_wider(
+    names_from = measurement,
+    values_from = value                       
+  ) 
+print(data2_tidy)
+```
+
+---
+#Table of descriptive statistics
+```{r}
+#| echo = FALSE
+summary_table <- data2_tidy |>
+  group_by(phoneme) |>
+  summarise(
+    mean_skew = mean(skewness),
+    mean_cog = mean(cog),
+    min_skew = min(skewness),
+    min_cog = min(cog),
+    mead_skew = median (skewness),
+    mead_cog = median (cog)
+  )
+
+knitr::kable(summary_table)
+```
+
+---
+#Boxplot of Center of Gravity by Phoneme
+```{r}
+#| echo = FALSE
+data2_tidy |>
+  ggplot() +
+  aes(x = phoneme, y = cog) +
+  geom_boxplot() +
+  labs(
+    title = "Boxplot of Center of Gravity by Phoneme",
+    x = "Phoneme",
+    y = "Center of Gravity"
+  )
+```
+
+---
+#Skewness as a function of phoneme
+```{r}
+#| echo = FALSE
+data2_tidy |>
+  ggplot() +
+  aes(x = phoneme, y = skewness) +
+  stat_summary(
+    fun.data = "mean_se",  
+    geom = "point",        
+    size = 3,              
+    color = "red"         
+  ) +
+  labs(
+    title = "Skewness by Phoneme",
+    x = "Phoneme",
+    y = "Skewness"
+  )
+```
+---
+#Center of gravity as a function of skewness for the [s]
+```{r}
+s_data <- data2_tidy |>
+  filter(phoneme == "s") 
+
+model <- lm(cog ~ skewness, data = s_data)
+
+print(model)
+```
+---
+#Scatter Plot
+```{r}
+#| echo = FALSE
+s_data |>
+  ggplot() +
+  aes(x = skewness, y = cog) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(
+    title = "Center of Gravity as a function of Skewness for [s] Segments",
+    x = "Skewness",
+    y = "Center of Gravity"
+  )
+
+```
+---
+#Model Table
+```{r}
+knitr::kable(summary(model)$coef)
+```
+
+---
+#Model Diagnosis
+```{r}
+diagnosis(model)
+```
+
+---
+#Results
+The data were analyzed using a linear regression model to examine the relationship between skewness and center of gravity (cog) for the [s] phoneme. In this model, I used skewness as a predictor variable and the center of gravity as the dependent variable.The analysis showed a significant positive relationship between skewness and the center of gravity. Specifically, the coefficient for skewness was 1675.5933, indicating that for each unit increase in skewness, the center of gravity increased by approximately 1675.6 units. The intercept was -756.6888, suggesting that when skewness is zero, the center of gravity is approximately -756.7 units. The p-value for skewness was less than 0.0001, which indicates that this relationship is significant.
+
+The results were consistent across diagnostic checks, suggesting a  relationship between skewness and center of gravity for the [s] phoneme.
+
+---
+
+```{r}
+#| echo = FALSE
+data1|>
+  ggplot() +
+  geom_point() +
+  aes (x = x, y = y) +
+  labs (x = "x", y = "y", title = "Assumptions")
+```
+##There is no real data. There is a dinosaur
+---
+
+
+
+
+
+
+
+
